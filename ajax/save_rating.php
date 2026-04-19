@@ -4,77 +4,93 @@ header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    $business_id = $_POST['business_id'];
-    $name  = $_POST['name'];
-    $email = $_POST['email'];
-    $phone = $_POST['phone'];
-    $rating = $_POST['rating'];
+$business_id = $_POST['business_id'];
+$name = trim($_POST['name']);
+$email = trim($_POST['email']);
+$phone = trim($_POST['phone']);
+$rating = trim($_POST['rating']);
 
-    if (empty($name)) {
-        exit(json_encode(["status" => "error", "message" => "Name required"]));
-    }
+if (empty($name)) {
+exit(json_encode(["status"=>"error","message"=>"Name required"]));
+}
 
-    if (empty($email) && empty($phone)) {
-        exit(json_encode(["status" => "error", "message" => "Email or Phone required"]));
-    }
+if (empty($email) && empty($phone)) {
+exit(json_encode(["status"=>"error","message"=>"Email or Phone required"]));
+}
 
-    if ($rating < 0 || $rating > 5) {
-        exit(json_encode(["status" => "error", "message" => "Invalid rating"]));
-    }
+if ($rating < 0 || $rating > 5) {
+exit(json_encode(["status"=>"error","message"=>"Invalid rating"]));
+}
 
-    try {
+try {
 
-        
-        $check = $conn->prepare("
-            SELECT id FROM ratings
-            WHERE business_id = ?
-            AND (email = ? OR phone = ?)
-        ");
+$sql = "SELECT id FROM ratings WHERE business_id = ?";
+$params = [$business_id];
 
-        $check->execute([$business_id, $email, $phone]);
+if (!empty($email) && !empty($phone)) {
+$sql .= " AND (email = ? OR phone = ?)";
+$params[] = $email;
+$params[] = $phone;
+}
+elseif (!empty($email)) {
+$sql .= " AND email = ?";
+$params[] = $email;
+}
+else {
+$sql .= " AND phone = ?";
+$params[] = $phone;
+}
 
-        if ($check->rowCount() > 0) {
+$check = $conn->prepare($sql);
+$check->execute($params);
 
-            
-            $update = $conn->prepare("
-                UPDATE ratings
-                SET rating = ?
-                WHERE business_id = ?
-                AND (email = ? OR phone = ?)
-            ");
+if ($check->rowCount() > 0) {
 
-            $update->execute([
-                $rating,
-                $business_id,
-                $email,
-                $phone
-            ]);
-        } else {
+$row = $check->fetch(PDO::FETCH_ASSOC);
 
-            
-            $insert = $conn->prepare("
-                INSERT INTO ratings
-                (business_id, name, email, phone, rating)
-                VALUES (?, ?, ?, ?, ?)
-            ");
+$update = $conn->prepare("
+UPDATE ratings
+SET name=?, email=?, phone=?, rating=?
+WHERE id=?
+");
 
-            $insert->execute([
-                $business_id,
-                $name,
-                $email,
-                $phone,
-                $rating
-            ]);
-        }
+$update->execute([
+$name,
+$email,
+$phone,
+$rating,
+$row['id']
+]);
 
-        echo json_encode([
-            "status" => "success",
-            "message" => "Rating saved successfully"
-        ]);
-    } catch (Exception $e) {
-        echo json_encode([
-            "status" => "error",
-            "message" => $e->getMessage()
-        ]);
-    }
+} else {
+
+$insert = $conn->prepare("
+INSERT INTO ratings
+(business_id,name,email,phone,rating)
+VALUES(?,?,?,?,?)
+");
+
+$insert->execute([
+$business_id,
+$name,
+$email,
+$phone,
+$rating
+]);
+
+}
+
+echo json_encode([
+"status"=>"success",
+"message"=>"Rating saved successfully"
+]);
+
+} catch (Exception $e) {
+
+echo json_encode([
+"status"=>"error",
+"message"=>$e->getMessage()
+]);
+
+}
 }

@@ -252,7 +252,12 @@ return;
 
 $.post("ajax/add_business.php",
 $(this).serialize(),
-function(){
+function(res){
+
+if(res.trim() != "success"){
+    alert(res);
+    return;
+}
 
 bootstrap.Modal
 .getOrCreateInstance(document.getElementById('addModal'))
