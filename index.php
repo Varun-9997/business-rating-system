@@ -49,7 +49,7 @@ View Ratings
 <table class="table table-bordered bg-white">
 <thead class="table-dark">
 <tr>
-<th>ID</th>
+<th>Sr. No.</th>
 <th>Name</th>
 <th>Address</th>
 <th>Phone</th>
