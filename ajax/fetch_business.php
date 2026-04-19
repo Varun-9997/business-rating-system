@@ -60,7 +60,7 @@ while($row = $stmt->fetch(PDO::FETCH_ASSOC)){
 <td><?=$row['email']?></td>
 
 <td>
-<button class="btn btn-warning btn-sm editBtn" data-id="<?=$row['id']?>">Edit</button>
+<button class="btn btn-primary btn-sm editBtn" data-id="<?=$row['id']?>">Edit</button>
 <button class="btn btn-danger btn-sm deleteBtn" data-id="<?=$row['id']?>">Delete</button>
 </td>
 
