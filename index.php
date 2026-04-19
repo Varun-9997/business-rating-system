@@ -25,9 +25,26 @@ body{
 
 <h2 class="mb-4">Business Listing & Rating System</h2>
 
-<button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addModal">
+<div class="d-flex justify-content-between align-items-center mb-3">
+
+<button class="btn btn-primary me-2"
+data-bs-toggle="modal"
+data-bs-target="#addModal">
 Add Business
 </button>
+
+<button class="btn btn-dark"
+id="viewAllRatingsBtn">
+View Ratings
+</button>
+
+</div>
+
+<div class="row mb-3">
+<div class="col-md-4 ms-auto">
+<input type="text" class="form-control" id="searchInput" placeholder="Search businesses">
+</div>
+</div>
 
 <table class="table table-bordered bg-white">
 <thead class="table-dark">
@@ -39,16 +56,18 @@ Add Business
 <th>Email</th>
 <th>Actions</th>
 <th>Average Rating</th>
+<th>Rate</th>
 </tr>
 </thead>
 
 <tbody id="businessTable"></tbody>
 </table>
 
+<div id="paginationArea"></div>
+
 </div>
 
 
-<!-- ADD MODAL -->
 <div class="modal fade" id="addModal">
 <div class="modal-dialog">
 <div class="modal-content">
@@ -83,8 +102,6 @@ Add Business
 </div>
 
 
-
-<!-- EDIT MODAL -->
 <div class="modal fade" id="editModal">
 <div class="modal-dialog">
 <div class="modal-content">
@@ -109,8 +126,6 @@ Add Business
 </div>
 
 
-
-<!-- RATING MODAL -->
 <div class="modal fade" id="ratingModal">
 <div class="modal-dialog">
 <div class="modal-content">
@@ -148,6 +163,22 @@ Add Business
 </div>
 </div>
 
+<div class="modal fade" id="viewRatingsModal">
+<div class="modal-dialog modal-lg">
+<div class="modal-content">
+
+<div class="modal-header">
+<h5>All Ratings</h5>
+<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+
+<div class="modal-body" id="ratingsListBody">
+Loading...
+</div>
+
+</div>
+</div>
+</div>
 
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -164,33 +195,49 @@ if($.fn.raty){
     'https://cdnjs.cloudflare.com/ajax/libs/raty/2.9.0/images';
 }
 
-
-// EMAIL VALIDATION
 function validateEmail(email){
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+function loadBusinesses(page=1){
 
-function loadBusinesses(){
+let search = $("#searchInput").val();
 
-    $("#businessTable").load("ajax/fetch_business.php", function(){
+$.get("ajax/fetch_business.php",
+{
+page:page,
+search:search
+},
+function(data){
 
-        $('.ratingView').raty({
-            readOnly:true,
-            half:true,
-            score:function(){
-                return $(this).data("score");
-            }
-        });
+let parts = data.split("###pagination###");
 
-    });
+$("#businessTable").html(parts[0]);
+$("#paginationArea").html(parts[1]);
+
+$('.ratingView').raty({
+readOnly:true,
+half:true,
+score:function(){
+return $(this).data("score");
 }
-
-
-$(document).ready(function(){
-    loadBusinesses();
 });
 
+});
+
+}
+
+$(document).ready(function(){
+loadBusinesses();
+});
+
+$("#searchInput").keyup(function(){
+loadBusinesses(1);
+});
+
+$(document).on("click",".page-link-custom",function(){
+loadBusinesses($(this).data("page"));
+});
 
 $("#addBusinessForm").submit(function(e){
 
@@ -199,13 +246,13 @@ e.preventDefault();
 let email = $("input[name='email']", this).val();
 
 if(!validateEmail(email)){
-    alert("Invalid Email");
-    return;
+alert("Invalid Email");
+return;
 }
 
 $.post("ajax/add_business.php",
 $(this).serialize(),
-function(res){
+function(){
 
 bootstrap.Modal
 .getOrCreateInstance(document.getElementById('addModal'))
@@ -218,7 +265,6 @@ loadBusinesses();
 });
 
 });
-
 
 $(document).on("click",".editBtn",function(){
 
@@ -235,7 +281,6 @@ bootstrap.Modal
 });
 
 });
-
 
 $(document).on("submit","#editForm",function(e){
 
@@ -255,7 +300,6 @@ loadBusinesses();
 
 });
 
-
 $(document).on("click",".deleteBtn",function(){
 
 if(!confirm("Delete this business?")) return;
@@ -268,18 +312,17 @@ loadBusinesses();
 
 });
 
-
-$(document).on("click",".ratingView",function(){
+$(document).on("click",".rateBtn",function(){
 
 $("#rating_business_id").val($(this).data("id"));
 
 $('#ratingStars').raty('destroy');
 
 $('#ratingStars').raty({
-    half:true,
-    click:function(score){
-        $("#ratingValue").val(score);
-    }
+half:true,
+click:function(score){
+$("#ratingValue").val(score);
+}
 });
 
 bootstrap.Modal
@@ -287,7 +330,6 @@ bootstrap.Modal
 .show();
 
 });
-
 
 $("#ratingForm").submit(function(e){
 
@@ -298,13 +340,13 @@ let phone = $("input[name='phone']", this).val();
 let rating = $("#ratingValue").val();
 
 if(email=="" && phone==""){
-    alert("Email OR Phone required");
-    return;
+alert("Email OR Phone required");
+return;
 }
 
 if(rating==""){
-    alert("Please select rating");
-    return;
+alert("Please select rating");
+return;
 }
 
 $.post("ajax/save_rating.php",
@@ -320,6 +362,16 @@ $("#ratingForm")[0].reset();
 loadBusinesses();
 
 });
+
+});
+
+$("#viewAllRatingsBtn").click(function(){
+
+$("#ratingsListBody").load("ajax/view_rating.php");
+
+bootstrap.Modal
+.getOrCreateInstance(document.getElementById('viewRatingsModal'))
+.show();
 
 });
 

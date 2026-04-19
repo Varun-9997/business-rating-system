@@ -32,8 +32,14 @@ while($row = $stmt->fetch(PDO::FETCH_ASSOC)){
 
 <td>
 <div class="ratingView"
-     data-score="<?=$row['avg_rating']?>"
-     data-id="<?=$row['id']?>"></div>
+data-score="<?=$row['avg_rating']?>"></div>
+</td>
+
+<td>
+<button class="btn btn-success btn-sm rateBtn"
+data-id="<?=$row['id']?>">
+Rate
+</button>
 </td>
 
 </tr>
